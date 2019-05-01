@@ -15,7 +15,8 @@ plotData(data);
 // ********
 // (1). *** Convert data from Array into tensors ***
 // ********
-
+const xData = tf.tensor(data['x']);
+const yData = tf.tensor(data['y']);
 
 
 // ********
@@ -23,25 +24,40 @@ plotData(data);
 // ********
 // In this case, a simple model for linear regression
 // (Dense layer with 1 weight and 1 bias, i.e. y = W*x + B)
-
+const model = tf.sequential();
+model.add(
+    tf.layers.dense({
+        units: 1, 
+        inputShape: [1]
+    })
+);
 
 
 // ********
 // (3). *** Define the optimizer parameters and compile model ***
 // ********
-
+const learningRate = 0.07;
+const myOptimizer = tf.train.sgd(learningRate);
+model.compile({
+    loss: 'meanSquaredError', 
+    optimizer: myOptimizer
+});
 
 
 // ********
 // (4). *** Train the model ***
 // ********
 document.getElementById("trainModel").onclick = function(){
-    
-    // add TFJS code here =============
 
+    model.fit(xData, yData, {epochs: 50})
+    .then(history => {
 
-    //document.getElementById('getRegLine').disabled = false;
-    // ================================
+        console.log('Model Training Complete!');
+        plotLoss(history); 
+        document.getElementById('getRegLine').disabled = false;
+
+    })
+    .catch(error => console.log(error)); 
 
 }
 
@@ -51,27 +67,23 @@ document.getElementById("trainModel").onclick = function(){
 // ********
 document.getElementById("getRegLine").onclick = function(){
 
-    // add TFJS code here =============
+    let preds = model.predict(xData).dataSync();
+    const linePreds = Array.from(preds);
 
-    
-    // ================================
-
-    // plotDataAndRegLine(data, linePreds);
-    // document.getElementById('getPred').disabled = false;
+    plotDataAndRegLine(data, linePreds);
+    document.getElementById('getPred').disabled = false;
 
 }
 
 document.getElementById("getPred").onclick = function(){
 
-    // let xInput = parseFloat(document.getElementById("xInput").value);
-    // console.log('User Submitted:', xInput);
+    let xInput = parseFloat(document.getElementById("xInput").value);
+    console.log('User Submitted:', xInput);
 
-    // add TFJS code here =============
+    let pred = model.predict(tf.tensor(xInput, [1])).dataSync();
+    let predVal = Array.from(pred)[0];
 
-    
-    // ================================
-
-    // document.getElementById('prediction').innerHTML = parseFloat(predVal.toFixed(3)); 
+    document.getElementById('prediction').innerHTML = parseFloat(predVal.toFixed(3)); 
 
 }
 

@@ -9,25 +9,25 @@ import {MnistData} from './data.js.js';
 // ***
 // *** Our "Main" Code that Runs on Page Initialization ***
 // ***
-document.addEventListener('DOMContentLoaded', run);
 async function run() {  
   // load and display the data
   const data = new MnistData();
   await data.load();
   await showExamples(data);
 
-  // // model creation and training
-  // const model = getModel();
-  // tfvis.show.modelSummary({name: 'Model Architecture'}, model);
-  // console.log('Training Model...');
-  // await train(model, data);
-  // console.log('Model Training Complete.');
+  // model creation and training
+  const model = getModel();
+  tfvis.show.modelSummary({name: 'Model Architecture'}, model);
+  console.log('Training Model...');
+  await train(model, data);
+  console.log('Model Training Complete.');
 
-  // // model evaluation
-  // await showAccuracy(model, data);
-  // await showConfusion(model, data);
+  // model evaluation
+  await showAccuracy(model, data);
+  await showConfusion(model, data);
 
 }
+document.addEventListener('DOMContentLoaded', run);
 
 
 
@@ -44,25 +44,48 @@ function getModel() {
   const IMAGE_CHANNELS = 1;  
   
   // Add first convolutional layer. Remember to specify inputShape. 
-
+  model.add(tf.layers.conv2d({
+    inputShape: [IMAGE_WIDTH, IMAGE_HEIGHT, IMAGE_CHANNELS],
+    kernelSize: 5,
+    filters: 8,
+    strides: 1,
+    activation: 'relu',
+    kernelInitializer: 'varianceScaling'
+  }));
 
   // Add a MaxPooling layer to downsample using max values.  
+  model.add(tf.layers.maxPooling2d({poolSize: [2, 2], strides: [2, 2]}));
   
-
   // Repeat another conv2d + maxPooling stack. 
-
+  model.add(tf.layers.conv2d({
+    kernelSize: 5,
+    filters: 16,
+    strides: 1,
+    activation: 'relu',
+    kernelInitializer: 'varianceScaling'
+  }));
+  model.add(tf.layers.maxPooling2d({poolSize: [2, 2], strides: [2, 2]}));
   
   // Flatten the output of the 2D filters into a 1D vector for feeding to dense layer
-
+  model.add(tf.layers.flatten());
 
   // Our last layer is a dense layer which has 10 output units, one for each
   // output class (i.e. 0, 1, 2, 3, 4, 5, 6, 7, 8, 9).
-
+  const NUM_OUTPUT_CLASSES = 10;
+  model.add(tf.layers.dense({
+    units: NUM_OUTPUT_CLASSES,
+    kernelInitializer: 'varianceScaling',
+    activation: 'softmax'
+  }));
 
   // Choose an optimizer, loss function and accuracy metric,
   // then compile and return the model
-
-
+  const optimizer = tf.train.adam();
+  model.compile({
+    optimizer: optimizer,
+    loss: 'categoricalCrossentropy',
+    metrics: ['accuracy'],
+  });
 
   console.log('Model Generated');
   return model;
@@ -106,7 +129,13 @@ async function train(model, data) {
   });
 
   // execute training
-  return // define model fit function here
+  return model.fit(trainXs, trainYs, {
+    batchSize: BATCH_SIZE,
+    validationData: [testXs, testYs],
+    epochs: NUM_EPOCHS,
+    shuffle: true,
+    callbacks: fitCallbacks
+  });
 }
 
 
