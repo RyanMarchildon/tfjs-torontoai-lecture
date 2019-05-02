@@ -4,7 +4,7 @@
 
 // code adapted from: https://codelabs.developers.google.com/codelabs/tfjs-training-classfication/
 
-import {MnistData} from './data.js.js';
+import {MnistData} from './data.js';
 
 // ***
 // *** Our "Main" Code that Runs on Page Initialization ***
